@@ -1,6 +1,7 @@
 package testserver
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -94,6 +95,7 @@ func StartQuicServer(versions []protocol.VersionNumber) {
 	conn, err := net.ListenUDP("udp", addr)
 	Expect(err).NotTo(HaveOccurred())
 	port = strconv.Itoa(conn.LocalAddr().(*net.UDPAddr).Port)
+	fmt.Printf("Staring QUIC Server on port %s\n", port)
 
 	go func() {
 		defer GinkgoRecover()
@@ -106,5 +108,6 @@ func StopQuicServer() {
 }
 
 func Port() string {
+	fmt.Printf("Port(): %s\n", port)
 	return port
 }

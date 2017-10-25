@@ -1,12 +1,14 @@
 package quicproxy
 
 import (
+	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
+	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
 // Connection is a UDP connection
@@ -130,6 +132,7 @@ func NewQuicProxy(local string, version protocol.VersionNumber, opts *Opts) (*Qu
 		delayPacket: packetDelayer,
 		version:     version,
 	}
+	fmt.Printf("Starting proxy from %s to %s\n", conn.LocalAddr().String(), raddr.String())
 
 	go p.runProxy()
 	return &p, nil
@@ -189,19 +192,20 @@ func (p *QuicProxy) runProxy() error {
 		packetCount := atomic.AddUint64(&conn.incomingPacketCounter, 1)
 
 		if p.dropPacket(DirectionIncoming, packetCount) {
+			utils.Debugf("Dropping incoming packet %d", packetCount)
 			continue
 		}
 
 		// Send the packet to the server
 		delay := p.delayPacket(DirectionIncoming, packetCount)
 		if delay != 0 {
+			utils.Debugf("Delaying packet %d by %dms", packetCount, delay/time.Millisecond)
 			time.AfterFunc(delay, func() {
 				// TODO: handle error
 				_, _ = conn.ServerConn.Write(raw)
 			})
 		} else {
-			_, err := conn.ServerConn.Write(raw)
-			if err != nil {
+			if _, err := conn.ServerConn.Write(raw); err != nil {
 				return err
 			}
 		}
@@ -221,12 +225,14 @@ func (p *QuicProxy) runConnection(conn *connection) error {
 		packetCount := atomic.AddUint64(&conn.outgoingPacketCounter, 1)
 
 		if p.dropPacket(DirectionOutgoing, packetCount) {
+			utils.Debugf("Dropping outgoing packet %d", packetCount)
 			continue
 		}
 
 		delay := p.delayPacket(DirectionOutgoing, packetCount)
 		if delay != 0 {
 			time.AfterFunc(delay, func() {
+				utils.Debugf("Delaying packet %d by %dms", packetCount, delay/time.Millisecond)
 				// TODO: handle error
 				_, _ = p.conn.WriteToUDP(raw, conn.ClientAddr)
 			})
