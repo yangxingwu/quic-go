@@ -20,7 +20,7 @@ import (
 
 var directions = []quicproxy.Direction{quicproxy.DirectionIncoming, quicproxy.DirectionOutgoing, quicproxy.DirectionBoth}
 
-var _ = Describe("Drop tests", func() {
+var _ = PDescribe("Drop tests", func() {
 	var proxy *quicproxy.QuicProxy
 
 	startProxy := func(dropCallback quicproxy.DropCallback, version protocol.VersionNumber) {

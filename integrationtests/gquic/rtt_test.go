@@ -17,7 +17,7 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("non-zero RTT", func() {
+var _ = PDescribe("non-zero RTT", func() {
 	var proxy *quicproxy.QuicProxy
 
 	runRTTTest := func(rtt time.Duration, version protocol.VersionNumber) {

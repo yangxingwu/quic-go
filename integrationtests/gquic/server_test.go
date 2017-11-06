@@ -200,7 +200,7 @@ var _ = Describe("Server tests", func() {
 				Expect(body).To(Equal(testserver.PRData))
 			})
 
-			It("downloads a large file", func() {
+			PIt("downloads a large file", func() {
 				createDownloadFile("file.dat", testserver.PRDataLong)
 
 				startServer(version)

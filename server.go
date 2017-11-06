@@ -67,6 +67,7 @@ func ListenAddr(addr string, tlsConf *tls.Config, config *Config) (Listener, err
 // The listener is not active until Serve() is called.
 // The tls.Config must not be nil, the quic.Config may be nil.
 func Listen(conn net.PacketConn, tlsConf *tls.Config, config *Config) (Listener, error) {
+	utils.Infof("Listen: %s", conn.LocalAddr())
 	certChain := crypto.NewCertChain(tlsConf)
 	kex, err := crypto.NewCurve25519KEX()
 	if err != nil {
@@ -158,8 +159,10 @@ func populateServerConfig(config *Config) *Config {
 
 // serve listens on an existing PacketConn
 func (s *server) serve() {
+	utils.Infof("server")
 	for {
 		data := getPacketBuffer()
+		// utils.Infof("aquired packet buffer of len %d", cap(data))
 		data = data[:protocol.MaxReceivePacketSize]
 		// The packet size should not exceed protocol.MaxReceivePacketSize bytes
 		// If it does, we only read a truncated packet, which will then end up undecryptable
@@ -171,6 +174,7 @@ func (s *server) serve() {
 			return
 		}
 		data = data[:n]
+		// utils.Infof("Read %d bytes", n)
 		if err := s.handlePacket(s.conn, remoteAddr, data); err != nil {
 			utils.Errorf("error handling packet: %s", err.Error())
 		}
