@@ -19,6 +19,7 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/crypto"
 	"github.com/lucas-clemente/quic-go/internal/handshake"
 	"github.com/lucas-clemente/quic-go/internal/mocks"
+	"github.com/lucas-clemente/quic-go/internal/mocks/ackhandler"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/testdata"
 	"github.com/lucas-clemente/quic-go/internal/wire"
@@ -728,7 +729,7 @@ var _ = Describe("Session", func() {
 		})
 
 		It("sends ACK frames when congestion limited", func() {
-			sph := mocks.NewMockSentPacketHandler(mockCtrl)
+			sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
 			sph.EXPECT().GetLeastUnacked().AnyTimes()
 			sph.EXPECT().SendingAllowed().Return(false)
 			sph.EXPECT().GetStopWaitingFrame(false)
@@ -744,7 +745,7 @@ var _ = Describe("Session", func() {
 		})
 
 		It("sends a retransmittable packet when required by the SentPacketHandler", func() {
-			sph := mocks.NewMockSentPacketHandler(mockCtrl)
+			sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
 			sph.EXPECT().GetLeastUnacked().AnyTimes()
 			sph.EXPECT().SendingAllowed().Return(true)
 			sph.EXPECT().SendingAllowed().Return(false)
@@ -793,7 +794,7 @@ var _ = Describe("Session", func() {
 				Data:     []byte("foobar"),
 			}
 			var sentPacket *ackhandler.Packet
-			sph := mocks.NewMockSentPacketHandler(mockCtrl)
+			sph := mockackhandler.NewMockSentPacketHandler(mockCtrl)
 			sph.EXPECT().GetLeastUnacked().AnyTimes()
 			sph.EXPECT().GetStopWaitingFrame(gomock.Any())
 			sph.EXPECT().SendingAllowed().Return(true)
@@ -821,11 +822,11 @@ var _ = Describe("Session", func() {
 	})
 
 	Context("retransmissions", func() {
-		var sph *mocks.MockSentPacketHandler
+		var sph *mockackhandler.MockSentPacketHandler
 		BeforeEach(func() {
 			// a StopWaitingFrame is added, so make sure the packet number of the new package is higher than the packet number of the retransmitted packet
 			sess.packer.packetNumberGenerator.next = 0x1337 + 10
-			sph = mocks.NewMockSentPacketHandler(mockCtrl)
+			sph = mockackhandler.NewMockSentPacketHandler(mockCtrl)
 			sph.EXPECT().GetLeastUnacked().AnyTimes()
 			sph.EXPECT().SendingAllowed().Return(true)
 			sph.EXPECT().ShouldSendRetransmittablePacket()
@@ -979,7 +980,7 @@ var _ = Describe("Session", func() {
 		})
 
 		It("sets the timer to the ack timer", func() {
-			rph := mocks.NewMockReceivedPacketHandler(mockCtrl)
+			rph := mockackhandler.NewMockReceivedPacketHandler(mockCtrl)
 			rph.EXPECT().GetAckFrame().Return(&wire.AckFrame{LargestAcked: 0x1337})
 			rph.EXPECT().GetAlarmTimeout().Return(time.Now().Add(10 * time.Millisecond)).MinTimes(1)
 			sess.receivedPacketHandler = rph
