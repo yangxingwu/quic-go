@@ -125,3 +125,7 @@ const ClosedSessionDeleteTimeout = time.Minute
 
 // NumCachedCertificates is the number of cached compressed certificate chains, each taking ~1K space
 const NumCachedCertificates = 128
+
+// MinPacingDelay is the minimum delay for send pacing.
+// If the next packet is scheduled to be sent earlier than this delay, it will be sent immediately.
+const MinPacingDelay = 500 * time.Microsecond

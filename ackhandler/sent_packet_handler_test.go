@@ -7,6 +7,7 @@ import (
 	"github.com/lucas-clemente/quic-go/congestion"
 	"github.com/lucas-clemente/quic-go/internal/mocks"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
+	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/internal/wire"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -701,27 +702,39 @@ var _ = Describe("SentPacketHandler", func() {
 		})
 
 		It("allows or denies sending based on congestion", func() {
-			Expect(handler.retransmissionQueue).To(BeEmpty())
 			handler.bytesInFlight = 100
+			cong.EXPECT().TimeUntilSend(gomock.Any(), protocol.ByteCount(100)).Return(time.Hour)
+			Expect(handler.retransmissionQueue).To(BeEmpty())
 			cong.EXPECT().GetCongestionWindow().Return(protocol.MaxByteCount)
-			Expect(handler.SendingAllowed()).To(BeTrue())
+			Expect(handler.TimeUntilSend()).To(Equal(time.Hour))
 			cong.EXPECT().GetCongestionWindow().Return(protocol.ByteCount(0))
-			Expect(handler.SendingAllowed()).To(BeFalse())
+			Expect(handler.TimeUntilSend()).To(Equal(utils.InfDuration))
 		})
 
 		It("allows or denies sending based on the number of tracked packets", func() {
-			cong.EXPECT().GetCongestionWindow().Return(protocol.MaxByteCount).AnyTimes()
-			Expect(handler.SendingAllowed()).To(BeTrue())
+			cong.EXPECT().TimeUntilSend(gomock.Any(), gomock.Any()).Return(time.Hour)
+			cong.EXPECT().GetCongestionWindow().Return(protocol.MaxByteCount)
+			Expect(handler.TimeUntilSend()).To(Equal(time.Hour))
 			handler.retransmissionQueue = make([]*Packet, protocol.MaxTrackedSentPackets)
-			Expect(handler.SendingAllowed()).To(BeFalse())
+			Expect(handler.TimeUntilSend()).To(Equal(utils.InfDuration))
 		})
 
 		It("allows sending if there are retransmisisons outstanding", func() {
-			handler.bytesInFlight = 100
 			cong.EXPECT().GetCongestionWindow().Return(protocol.ByteCount(0)).AnyTimes()
-			Expect(handler.SendingAllowed()).To(BeFalse())
+			cong.EXPECT().TimeUntilSend(gomock.Any(), protocol.ByteCount(100)).Return(time.Minute)
+			handler.bytesInFlight = 100
+			Expect(handler.retransmissionQueue).To(BeEmpty())
+			Expect(handler.TimeUntilSend()).To(Equal(utils.InfDuration))
 			handler.retransmissionQueue = []*Packet{nil}
-			Expect(handler.SendingAllowed()).To(BeTrue())
+			Expect(handler.TimeUntilSend()).To(Equal(time.Minute))
+		})
+
+		It("doesn't return very small times until send", func() {
+			delay := time.Microsecond
+			Expect(delay).To(BeNumerically("<", protocol.MinPacingDelay))
+			cong.EXPECT().GetCongestionWindow().Return(protocol.MaxByteCount)
+			cong.EXPECT().TimeUntilSend(gomock.Any(), gomock.Any()).Return(delay)
+			Expect(handler.TimeUntilSend()).To(BeZero())
 		})
 	})
 
