@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.6.1 (unreleased)
+- The lower boundary for packets included in ACKs is now derived, and the value sent in STOP_WAITING frames is ignored.
 
 ## v0.6.0 (2017-12-12)
 
