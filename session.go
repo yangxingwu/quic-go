@@ -692,8 +692,10 @@ func (s *session) sendPacket() error {
 
 	// Get MAX_DATA and MAX_STREAM_DATA frames
 	// this call triggers the flow controller to increase the flow control windows, if necessary
-	for _, f := range s.getWindowUpdates() {
-		s.packer.QueueControlFrame(f)
+	if offset := s.connFlowController.GetWindowUpdate(); offset != 0 {
+		s.packer.QueueControlFrame(&wire.MaxDataFrame{
+			ByteOffset: offset,
+		})
 	}
 
 	ack := s.receivedPacketHandler.GetAckFrame()
@@ -900,24 +902,6 @@ func (s *session) tryDecryptingQueuedPackets() {
 		s.handlePacket(p)
 	}
 	s.undecryptablePackets = s.undecryptablePackets[:0]
-}
-
-func (s *session) getWindowUpdates() []wire.Frame {
-	var res []wire.Frame
-	s.streamsMap.Range(func(str streamI) {
-		if offset := str.GetWindowUpdate(); offset != 0 {
-			res = append(res, &wire.MaxStreamDataFrame{
-				StreamID:   str.StreamID(),
-				ByteOffset: offset,
-			})
-		}
-	})
-	if offset := s.connFlowController.GetWindowUpdate(); offset != 0 {
-		res = append(res, &wire.MaxDataFrame{
-			ByteOffset: offset,
-		})
-	}
-	return res
 }
 
 func (s *session) LocalAddr() net.Addr {

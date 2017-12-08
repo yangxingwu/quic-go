@@ -27,7 +27,6 @@ type streamI interface {
 	ShouldSendFin() bool
 	SentFin()
 	// methods needed for flow control
-	GetWindowUpdate() protocol.ByteCount
 	UpdateSendWindow(protocol.ByteCount)
 	IsFlowControlBlocked() bool
 }
@@ -119,6 +118,20 @@ func newStream(StreamID protocol.StreamID,
 
 // Read implements io.Reader. It is not thread safe!
 func (s *stream) Read(p []byte) (int, error) {
+	n, err := s.readImpl(p)
+	if n > 0 {
+		if offset := s.flowController.GetWindowUpdate(); offset != 0 {
+			s.queueControlFrame(&wire.MaxStreamDataFrame{
+				StreamID:   s.streamID,
+				ByteOffset: offset,
+			})
+			s.onData()
+		}
+	}
+	return n, err
+}
+
+func (s *stream) readImpl(p []byte) (int, error) {
 	s.mutex.Lock()
 	err := s.err
 	s.mutex.Unlock()
@@ -194,7 +207,6 @@ func (s *stream) Read(p []byte) (int, error) {
 		if !s.resetRemotely.Get() {
 			s.flowController.AddBytesRead(protocol.ByteCount(m))
 		}
-		s.onData() // so that a possible WINDOW_UPDATE is sent
 
 		if s.readPosInFrame >= int(frame.DataLen()) {
 			fin := frame.FinBit
@@ -491,10 +503,6 @@ func (s *stream) UpdateSendWindow(n protocol.ByteCount) {
 
 func (s *stream) IsFlowControlBlocked() bool {
 	return s.flowController.IsBlocked()
-}
-
-func (s *stream) GetWindowUpdate() protocol.ByteCount {
-	return s.flowController.GetWindowUpdate()
 }
 
 // SetReadOffset sets the read offset.

@@ -106,18 +106,6 @@ func (_mr *MockStreamIMockRecorder) GetDataForWriting(arg0 interface{}) *gomock.
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetDataForWriting", reflect.TypeOf((*MockStreamI)(nil).GetDataForWriting), arg0)
 }
 
-// GetWindowUpdate mocks base method
-func (_m *MockStreamI) GetWindowUpdate() protocol.ByteCount {
-	ret := _m.ctrl.Call(_m, "GetWindowUpdate")
-	ret0, _ := ret[0].(protocol.ByteCount)
-	return ret0
-}
-
-// GetWindowUpdate indicates an expected call of GetWindowUpdate
-func (_mr *MockStreamIMockRecorder) GetWindowUpdate() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetWindowUpdate", reflect.TypeOf((*MockStreamI)(nil).GetWindowUpdate))
-}
-
 // GetWriteOffset mocks base method
 func (_m *MockStreamI) GetWriteOffset() protocol.ByteCount {
 	ret := _m.ctrl.Call(_m, "GetWriteOffset")
