@@ -67,9 +67,9 @@ func (c *baseFlowController) AddBytesRead(n protocol.ByteCount) {
 // getWindowUpdate updates the receive window, if necessary
 // it returns the new offset
 func (c *baseFlowController) getWindowUpdate() protocol.ByteCount {
-	diff := c.receiveWindow - c.bytesRead
-	// update the window when more than half of it was already consumed
-	if diff >= (c.receiveWindowIncrement / 2) {
+	bytesRemaining := c.receiveWindow - c.bytesRead
+	// update the window when more than the threshold was consumed
+	if bytesRemaining >= protocol.ByteCount((float64(c.receiveWindowIncrement) * float64((1 - protocol.WindowUpdateThreshold)))) {
 		return 0
 	}
 
@@ -99,7 +99,7 @@ func (c *baseFlowController) maybeAdjustWindowIncrement() {
 
 	timeSinceLastWindowUpdate := time.Since(c.lastWindowUpdateTime)
 	// interval between the window updates is sufficiently large, no need to increase the increment
-	if timeSinceLastWindowUpdate >= 2*rtt {
+	if timeSinceLastWindowUpdate >= 4*protocol.WindowUpdateThreshold*rtt {
 		return
 	}
 	c.receiveWindowIncrement = utils.MinByteCount(2*c.receiveWindowIncrement, c.maxReceiveWindowIncrement)
