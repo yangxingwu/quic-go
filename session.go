@@ -847,14 +847,6 @@ func (s *session) WaitUntilHandshakeComplete() error {
 	return <-s.handshakeCompleteChan
 }
 
-func (s *session) queueResetStreamFrame(id protocol.StreamID, offset protocol.ByteCount) {
-	s.packer.QueueControlFrame(&wire.RstStreamFrame{
-		StreamID:   id,
-		ByteOffset: offset,
-	})
-	s.scheduleSending()
-}
-
 func (s *session) newStream(id protocol.StreamID) streamI {
 	var initialSendWindow protocol.ByteCount
 	if s.peerParams != nil {
@@ -869,7 +861,7 @@ func (s *session) newStream(id protocol.StreamID) streamI {
 		initialSendWindow,
 		s.rttStats,
 	)
-	return newStream(id, s.scheduleSending, s.queueResetStreamFrame, flowController, s.version)
+	return newStream(id, s.scheduleSending, s.packer.QueueControlFrame, flowController, s.version)
 }
 
 func (s *session) sendPublicReset(rejectedPacketNumber protocol.PacketNumber) error {
