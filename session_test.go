@@ -507,7 +507,7 @@ var _ = Describe("Session", func() {
 			_, err := sess.GetOrOpenStream(5)
 			Expect(err).ToNot(HaveOccurred())
 			sess.streamsMap.Range(func(s streamI) {
-				s.(*mocks.MockStreamI).EXPECT().Cancel(gomock.Any())
+				s.(*mocks.MockStreamI).EXPECT().CloseAbruptly(gomock.Any())
 			})
 			err = sess.handleFrames([]wire.Frame{&wire.ConnectionCloseFrame{ErrorCode: qerr.ProofInvalid, ReasonPhrase: "foobar"}}, protocol.EncryptionUnspecified)
 			Expect(err).NotTo(HaveOccurred())
@@ -1406,7 +1406,7 @@ var _ = Describe("Session", func() {
 			str, err := sess.GetOrOpenStream(9)
 			Expect(err).ToNot(HaveOccurred())
 			str.Close()
-			str.(*stream).Cancel(nil)
+			str.(*stream).CloseAbruptly(nil)
 			Expect(str.(*stream).Finished()).To(BeTrue())
 			err = sess.streamsMap.DeleteClosedStreams()
 			Expect(err).ToNot(HaveOccurred())

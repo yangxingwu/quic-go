@@ -21,7 +21,7 @@ type streamI interface {
 	RegisterRemoteError(error, protocol.ByteCount) error
 	PopStreamFrame(maxBytes protocol.ByteCount) *wire.StreamFrame
 	Finished() bool
-	Cancel(error)
+	CloseAbruptly(error)
 	// methods needed for flow control
 	GetWindowUpdate() protocol.ByteCount
 	UpdateSendWindow(protocol.ByteCount)
@@ -391,9 +391,10 @@ func (s *stream) CloseRemote(offset protocol.ByteCount) {
 	s.AddStreamFrame(&wire.StreamFrame{FinBit: true, Offset: offset})
 }
 
-// Cancel is called by session to indicate that an error occurred
-// The stream should will be closed immediately
-func (s *stream) Cancel(err error) {
+// CloseAbruptly closes a stream abruptly.
+// It makes Read and Write unblock (and return the error) immediately.
+// The peer will NOT be informed about this: the stream is closed without sending a FIN or RST.
+func (s *stream) CloseAbruptly(err error) {
 	s.mutex.Lock()
 	s.cancelled.Set(true)
 	s.ctxCancel()

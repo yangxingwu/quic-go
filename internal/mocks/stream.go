@@ -48,16 +48,6 @@ func (_mr *MockStreamIMockRecorder) AddStreamFrame(arg0 interface{}) *gomock.Cal
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "AddStreamFrame", reflect.TypeOf((*MockStreamI)(nil).AddStreamFrame), arg0)
 }
 
-// Cancel mocks base method
-func (_m *MockStreamI) Cancel(_param0 error) {
-	_m.ctrl.Call(_m, "Cancel", _param0)
-}
-
-// Cancel indicates an expected call of Cancel
-func (_mr *MockStreamIMockRecorder) Cancel(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Cancel", reflect.TypeOf((*MockStreamI)(nil).Cancel), arg0)
-}
-
 // Close mocks base method
 func (_m *MockStreamI) Close() error {
 	ret := _m.ctrl.Call(_m, "Close")
@@ -68,6 +58,16 @@ func (_m *MockStreamI) Close() error {
 // Close indicates an expected call of Close
 func (_mr *MockStreamIMockRecorder) Close() *gomock.Call {
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Close", reflect.TypeOf((*MockStreamI)(nil).Close))
+}
+
+// CloseAbruptly mocks base method
+func (_m *MockStreamI) CloseAbruptly(_param0 error) {
+	_m.ctrl.Call(_m, "CloseAbruptly", _param0)
+}
+
+// CloseAbruptly indicates an expected call of CloseAbruptly
+func (_mr *MockStreamIMockRecorder) CloseAbruptly(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CloseAbruptly", reflect.TypeOf((*MockStreamI)(nil).CloseAbruptly), arg0)
 }
 
 // Context mocks base method
